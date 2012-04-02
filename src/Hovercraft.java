@@ -41,7 +41,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
     
-    private int PRINTSCREEN=44;
+    private int PRINTSCREEN=44, DELETE=46;
     private int bpress_count=0,keypress_count=0,rtfimage_count=0,filecheck_exists=0;
     private String sfilepath,sfilename,temp_jpg_filename,temp_jpg_filename_rtf,browse_path;
     //private Document doc = new Document();
@@ -187,6 +187,7 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
             //System.out.println("Name is "+sfilename);
             startstop_button.setText("STOP");
             JIntellitype.getInstance().registerHotKey(PRINTSCREEN,0, 44);
+            JIntellitype.getInstance().registerHotKey(DELETE, JIntellitype.MOD_CONTROL, 46);
             File filecheck = new File(sfilepath+sfilename);
                 if(filecheck.exists())
                 {
@@ -202,6 +203,7 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
             Document doc = new Document();
             startstop_button.setText("START");
             JIntellitype.getInstance().unregisterHotKey(PRINTSCREEN);
+            JIntellitype.getInstance().unregisterHotKey(DELETE);
             //System.out.println("UnRegistered");
             try {
                 RtfWriter2 rtfw = RtfWriter2.getInstance(doc, new FileOutputStream(sfilepath+sfilename));
@@ -270,7 +272,8 @@ public void initJIntellitype()
     
     public void onHotKey(int key_identifier){
         
-        if(key_identifier==44){
+        if(key_identifier==44)
+        {
             
             //System.out.println("PRINT SCREEN pressed");
             screensize = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
@@ -292,6 +295,13 @@ public void initJIntellitype()
             Global.Global_Int = keypress_count;
             
         }
+        if (key_identifier==46)
+        {
+            System.out.println("DELETE pressed.");
+            keypress_count--;
+            Global.Global_Int = keypress_count;            
+        }
+            
                
     }
     /**
