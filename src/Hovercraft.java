@@ -38,6 +38,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import java.util.logging.*;
 
 public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
     
@@ -50,6 +51,7 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
     Image i1;
     Rectangle screensize;
     File temp_jpg;
+    
     
     /** Creates new form Hovercraft */
     public Hovercraft() {
@@ -75,6 +77,7 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         browse_button = new javax.swing.JButton();
+        version = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("HOVERCRAFT");
@@ -118,6 +121,8 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
             }
         });
 
+        version.setText("v1.3");
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -125,7 +130,8 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
             .add(layout.createSequentialGroup()
                 .add(163, 163, 163)
                 .add(startstop_button, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 186, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(163, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 141, Short.MAX_VALUE)
+                .add(version))
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(70, Short.MAX_VALUE)
                 .add(jLabel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 372, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -165,8 +171,11 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(file_name, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(37, 37, 37)
-                .add(startstop_button, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 88, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(layout.createSequentialGroup()
+                        .add(startstop_button, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 88, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())
+                    .add(version)))
         );
 
         pack();
@@ -191,10 +200,9 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
             File filecheck = new File(sfilepath+sfilename);
                 if(filecheck.exists())
                 {
-                    JOptionPane.showMessageDialog(null,"A file with this name already exists! \n It will be renamed.");
                     filecheck_exists++;
-                    filecheck.renameTo(new File(sfilepath+filecheck_exists+"_"+sfilename));
-                    
+                    JOptionPane.showMessageDialog(null,"A file with this name already exists! \n It will be renamed to "+filecheck_exists+"_"+sfilename);
+                    filecheck.renameTo(new File(sfilepath+filecheck_exists+"_"+sfilename));                    
                 }
             //System.out.println("Registered");
         }
@@ -259,7 +267,7 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
         //System.out.println(browse_path);
         if (browse_path.charAt(browse_path.length()-4)=='.')
         {
-            JOptionPane.showMessageDialog(file_chooser, "It appears that you have chosen a file instead of a directory. \n Please choose a directory.", "Please choose a directory", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(file_chooser, "You have chosen a file instead of a directory. \n Please choose a directory.", "Please choose a directory", JOptionPane.ERROR_MESSAGE);
             return;
         }
         browse_path=browse_path.concat("\\");
@@ -297,7 +305,8 @@ public void initJIntellitype()
         }
         if (key_identifier==46)
         {
-            System.out.println("DELETE pressed.");
+            //System.out.println("DELETE pressed.");
+            //Logger.getLogger(Hovercraft.class.getName()).info("Delete Pressed for "+temp_jpg_filename);
             keypress_count--;
             Global.Global_Int = keypress_count;            
         }
@@ -307,7 +316,10 @@ public void initJIntellitype()
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String args[]) throws IOException {
+        FileHandler logfile_handler = new FileHandler("log.txt",true);
+        logfile_handler.setFormatter(new SimpleFormatter());
+        Logger.getLogger(Hovercraft.class.getName()).addHandler(logfile_handler);
         try {
             UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
         } catch (ClassNotFoundException ex) {
@@ -320,7 +332,7 @@ public void initJIntellitype()
             Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
         }
         java.awt.EventQueue.invokeLater(new Runnable() {
-
+            
             
             public void run() {
                 new Hovercraft().setVisible(true);
@@ -335,6 +347,7 @@ public void initJIntellitype()
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JButton startstop_button;
+    private javax.swing.JLabel version;
     // End of variables declaration//GEN-END:variables
 }
 
