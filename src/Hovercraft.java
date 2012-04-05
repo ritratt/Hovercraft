@@ -43,7 +43,7 @@ import java.util.logging.*;
 public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
     
     private int PRINTSCREEN=44, DELETE=46;
-    private int bpress_count=0,keypress_count=0,rtfimage_count=0,filecheck_exists=0;
+    private int bpress_count=0,keypress_count=0,rtfimage_count=0,filecheck_exists=0,close;
     private String sfilepath,sfilename,temp_jpg_filename,temp_jpg_filename_rtf,browse_path;
     //private Document doc = new Document();
     private Robot screenRobot;
@@ -79,10 +79,15 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
         browse_button = new javax.swing.JButton();
         version = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("HOVERCRAFT");
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setResizable(false);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
         startstop_button.setFont(new java.awt.Font("Tahoma", 0, 48));
         startstop_button.setText("START");
@@ -273,6 +278,26 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
         browse_path=browse_path.concat("\\");
         file_path.setText(browse_path);
     }//GEN-LAST:event_browse_buttonActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        // TODO add your handling code here:
+        if(startstop_button.getText().equals("STOP"))
+        {
+            close = JOptionPane.showConfirmDialog(startstop_button, "You have not clicked the STOP button. Exiting will NOT save the screenshots. \n Are you sure you want to exit?", "Are you sure you want to exit?", JOptionPane.YES_NO_OPTION);
+            if (close==0)
+                System.exit(0);
+            if (close==1)
+                return;
+        }
+        else
+        {
+            close = JOptionPane.showConfirmDialog(startstop_button, "Are you sure you want to exit?", "Are you sure you want to exit?", JOptionPane.YES_NO_OPTION);
+            if (close==0)
+                System.exit(0);
+            if (close==1)
+                return;
+        }
+    }//GEN-LAST:event_formWindowClosing
 public void initJIntellitype()
     {
         JIntellitype.getInstance().addHotKeyListener(this);
