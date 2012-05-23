@@ -213,6 +213,14 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
         }
         
         if(bpress_count%2==0) {
+            
+            if(Global.Global_Int==0)
+            {
+                JOptionPane.showMessageDialog(startstop_button, "No screenshots taken.\n No file will be created");
+                startstop_button.setText("START");
+                return;
+            }
+            
             Document doc = new Document();
             startstop_button.setText("START");
             JIntellitype.getInstance().unregisterHotKey(PRINTSCREEN);
@@ -226,6 +234,7 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
             
             doc.open();
             //System.out.println("OPENED");
+            
             for(rtfimage_count=0;rtfimage_count<Global.Global_Int;rtfimage_count++) {
                 temp_jpg_filename_rtf = sfilename+rtfimage_count+".jpg";
                 
