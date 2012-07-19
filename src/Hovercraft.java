@@ -25,31 +25,42 @@ import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.MalformedURLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Calendar;
+import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import java.util.logging.*;
 
 public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
     
-    private int PRINTSCREEN=44;
-    private int bpress_count=0,keypress_count=0,rtfimage_count=0,filecheck_exists=0;
-    private String sfilepath,sfilename,temp_jpg_filename,temp_jpg_filename_rtf,browse_path;
+    private int PRINTSCREEN=44, DELETE=46;
+    private int bpress_count=0,keypress_count=0,rtfimage_count=0,filecheck_exists=0,close;
+    private String sfilepath,sfilename,temp_jpg_filename,temp_jpg_filename_rtf,browse_path,retained_path;
     //private Document doc = new Document();
     private Robot screenRobot;
     BufferedImage bf;
     Image i1;
     Rectangle screensize;
-    File temp_jpg;
+    File temp_jpg,file_retained_path = new File("retained_path.txt"),retained_directory;
+    Calendar c = Calendar.getInstance();
+    Writer outwrite=null;
+    Scanner scanner;
+    boolean flag_retained_directory=false;
+    Document doc;
+        
     
     /** Creates new form Hovercraft */
     public Hovercraft() {
@@ -75,13 +86,21 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         browse_button = new javax.swing.JButton();
+        version = new javax.swing.JLabel();
+        openlastfile = new javax.swing.JButton();
+        deletelastfile = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("HOVERCRAFT");
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setResizable(false);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
-        startstop_button.setFont(new java.awt.Font("Tahoma", 0, 48));
+        startstop_button.setFont(new java.awt.Font("Tahoma", 0, 48)); // NOI18N
         startstop_button.setText("START");
         startstop_button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -118,36 +137,58 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
             }
         });
 
+        version.setText("v2.0");
+
+        openlastfile.setText("Open Last File");
+        openlastfile.setEnabled(false);
+        openlastfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openlastfileActionPerformed(evt);
+            }
+        });
+
+        deletelastfile.setText("Delete Last File");
+        deletelastfile.setEnabled(false);
+        deletelastfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deletelastfileActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
-                .add(163, 163, 163)
-                .add(startstop_button, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 186, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(163, Short.MAX_VALUE))
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(70, Short.MAX_VALUE)
-                .add(jLabel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 372, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(70, 70, 70))
-            .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 71, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(431, Short.MAX_VALUE))
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jLabel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 74, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(428, Short.MAX_VALUE))
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(file_name, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 492, Short.MAX_VALUE)
-                .addContainerGap())
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .add(file_path, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(browse_button, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 82, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createSequentialGroup()
+                        .add(openlastfile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 126, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(34, 34, 34)
+                        .add(startstop_button, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 186, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(34, 34, 34)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(version)
+                            .add(layout.createSequentialGroup()
+                                .add(deletelastfile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 113, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap())))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(jLabel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 372, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(70, 70, 70))
+                    .add(layout.createSequentialGroup()
+                        .add(jLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 71, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(432, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(jLabel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 74, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(429, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(file_name, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 493, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(file_path, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(browse_button, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 82, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -165,78 +206,113 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(file_name, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(37, 37, 37)
-                .add(startstop_button, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 88, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(layout.createSequentialGroup()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(startstop_button, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 88, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(openlastfile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 39, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(deletelastfile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 36, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap())
+                    .add(version)))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void startstop_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startstop_buttonActionPerformed
-        // TODO add your handling code here:
-        if (file_path.getText().length()==0)
-        {
-            JOptionPane.showMessageDialog(startstop_button, "The File Path field is empty. \n Please fill it!", "File Path Empty", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        bpress_count++;
-        if(bpress_count%2==1) {
-            sfilepath = file_path.getText();
-            sfilename=file_name.getText()+".rtf";
-            //System.out.println("Path is "+sfilepath);
-            //System.out.println("Name is "+sfilename);
-            startstop_button.setText("STOP");
-            JIntellitype.getInstance().registerHotKey(PRINTSCREEN,0, 44);
-            File filecheck = new File(sfilepath+sfilename);
-                if(filecheck.exists())
-                {
-                    JOptionPane.showMessageDialog(null,"A file with this name already exists! \n It will be renamed.");
-                    filecheck_exists++;
-                    filecheck.renameTo(new File(sfilepath+filecheck_exists+"_"+sfilename));
-                    
-                }
-            //System.out.println("Registered");
-        }
-        
-        if(bpress_count%2==0) {
-            Document doc = new Document();
-            startstop_button.setText("START");
-            JIntellitype.getInstance().unregisterHotKey(PRINTSCREEN);
-            //System.out.println("UnRegistered");
-            try {
-                RtfWriter2 rtfw = RtfWriter2.getInstance(doc, new FileOutputStream(sfilepath+sfilename));
-            } catch (FileNotFoundException ex) {
+        BufferedWriter outwrite = null;
+        //TODO add your handling code here:
+            if (file_path.getText().length()==0 || file_name.getText().length()==0)
+            {
+                JOptionPane.showMessageDialog(startstop_button, "File path or file name field is empy. \n Please fill it!", "Field Empty", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            File filecheck = new File(file_path.getText()+file_name.getText()+".rtf");
+            if(filecheck.exists())
+            {
+                //filecheck_exists++;
+                JOptionPane.showMessageDialog(null,"A file with this name already exists! \n Please choose a different file name.");
+                //System.out.println("UnRegistered");
+                //System.out.println(sfilename);
+                //filecheck.renameTo(new File(sfilepath+sfilename));
+                return;
+            }
+            
+            
+            bpress_count++;
+            if(bpress_count%2==1) {
+                sfilepath = file_path.getText();
+                sfilename=file_name.getText()+".rtf";
+                //System.out.println("Path is "+sfilepath);
+                //System.out.println("Name is "+sfilename);
+                
+                JIntellitype.getInstance().registerHotKey(PRINTSCREEN,0, 44);
+                JIntellitype.getInstance().registerHotKey(DELETE, JIntellitype.MOD_CONTROL, 46);
+                startstop_button.setText("STOP");
+                //System.out.println("Registered");
+                try {
+                outwrite=new BufferedWriter(new FileWriter(file_retained_path));
+                outwrite.write(sfilepath+sfilename);
+                outwrite.close();
+            } catch (IOException ex) {
                 Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
-            doc.open();
-            //System.out.println("OPENED");
-            for(rtfimage_count=0;rtfimage_count<Global.Global_Int;rtfimage_count++) {
-                temp_jpg_filename_rtf = sfilename+rtfimage_count+".jpg";
-                
-                try {
-                    i1 = Image.getInstance(temp_jpg_filename_rtf);
-                } catch (BadElementException ex) {
-                    Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (MalformedURLException ex) {
-                    Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (IOException ex) {
-                    Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                i1.scalePercent(40);
-                try {
-                    doc.add(i1);
-                } catch (DocumentException ex) {
-                    Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                File temp_jpg_delete = new File(temp_jpg_filename_rtf);
-                if(temp_jpg_delete.exists())
-                    temp_jpg_delete.delete();
+                if(openlastfile.isEnabled())
+                    openlastfile.setEnabled(false);
+                deletelastfile.setEnabled(false);
             }
-            doc.close();
-            keypress_count=0;
-            
-        }
+            if(bpress_count%2==0) {
+                
+                if(Global.Global_Int==0)
+                {
+                    JOptionPane.showMessageDialog(startstop_button, "No screenshots taken.\n No file will be created or renamed.");
+                    startstop_button.setText("START");
+                    return;
+                }
+                
+                doc = new Document();
+                startstop_button.setText("START");
+                JIntellitype.getInstance().unregisterHotKey(PRINTSCREEN);
+                JIntellitype.getInstance().unregisterHotKey(DELETE);
+                //System.out.println("UnRegistered");
+                try {
+                    RtfWriter2 rtfw = RtfWriter2.getInstance(doc, new FileOutputStream(sfilepath+sfilename));
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+                doc.open();
+                //System.out.println("OPENED");
+                
+                for(rtfimage_count=0;rtfimage_count<Global.Global_Int;rtfimage_count++) {
+                    temp_jpg_filename_rtf = sfilename+rtfimage_count+".jpg";
+                    
+                    try {
+                        i1 = Image.getInstance(temp_jpg_filename_rtf);
+                    } catch (BadElementException ex) {
+                        Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (MalformedURLException ex) {
+                        Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    i1.scalePercent(40);
+                    try {
+                        doc.add(i1);
+                    } catch (DocumentException ex) {
+                        Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    File temp_jpg_delete = new File(temp_jpg_filename_rtf);
+                    if(temp_jpg_delete.exists())
+                        temp_jpg_delete.delete();
+                }
+                doc.close();
+                keypress_count=0;
+                openlastfile.setEnabled(true);
+                deletelastfile.setEnabled(true);
+      }
+      
+        
 }//GEN-LAST:event_startstop_buttonActionPerformed
 
     private void file_pathActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_file_pathActionPerformed
@@ -251,18 +327,77 @@ public class Hovercraft extends javax.swing.JFrame implements HotkeyListener{
         // TODO add your handling code here:
         JFileChooser file_chooser = new JFileChooser();
         file_chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        File f=new File("retained_path.txt");
+        if(flag_retained_directory)
+            file_chooser.setCurrentDirectory(retained_directory);
         file_chooser.showDialog(file_chooser, "Select Directory");
+        
         File directory = file_chooser.getSelectedFile();
+        retained_directory=directory;
+        flag_retained_directory=true;
         browse_path = directory.getAbsolutePath();
         //System.out.println(browse_path);
         if (browse_path.charAt(browse_path.length()-4)=='.')
         {
-            JOptionPane.showMessageDialog(file_chooser, "It appears that you have chosen a file instead of a directory. \n Please choose a directory.", "Please choose a directory", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(file_chooser, "You have chosen a file instead of a directory. \n Please choose a directory.", "Please choose a directory", JOptionPane.ERROR_MESSAGE);
             return;
         }
         browse_path=browse_path.concat("\\");
         file_path.setText(browse_path);
     }//GEN-LAST:event_browse_buttonActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        // TODO add your handling code here:
+        if(startstop_button.getText().equals("STOP"))
+        {
+            close = JOptionPane.showConfirmDialog(startstop_button, "You have not clicked the STOP button. Exiting will NOT save the screenshots. \n Are you sure you want to exit?", "Are you sure you want to exit?", JOptionPane.YES_NO_OPTION);
+            if (close==0)
+                System.exit(0);
+            if (close==1)
+                return;
+        }
+        else
+        {
+            close = JOptionPane.showConfirmDialog(startstop_button, "Are you sure you want to exit?", "Are you sure you want to exit?", JOptionPane.YES_NO_OPTION);
+            if (close==0)
+                System.exit(0);
+            if (close==1)
+                return;
+        }
+    }//GEN-LAST:event_formWindowClosing
+
+    private void openlastfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openlastfileActionPerformed
+        try {
+            // TODO add your handling code here:
+            scanner = new Scanner(new FileInputStream("retained_path.txt"));
+            StringBuilder sb = new StringBuilder();
+            while (scanner.hasNextLine()){
+                sb.append(scanner.nextLine());
+                }
+            scanner.close();
+            retained_path=sb.toString();
+            Runtime.getRuntime().exec(new String[]{ "rundll32","url.dll,FileProtocolHandler", retained_path });
+        } catch (IOException ex) {
+            Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        
+    }//GEN-LAST:event_openlastfileActionPerformed
+
+    private void deletelastfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deletelastfileActionPerformed
+        // TODO add your handling code here:
+        File delete = new File(sfilepath+sfilename);
+        int ensure_delete=JOptionPane.showConfirmDialog(deletelastfile, "Are you sure you want to delete the last file?","Are you sure", JOptionPane.YES_NO_OPTION);
+        if (ensure_delete==0) 
+        {
+            delete.delete();
+            if(openlastfile.isEnabled())
+                openlastfile.setEnabled(false);
+        }
+        else
+            return;
+        
+    }//GEN-LAST:event_deletelastfileActionPerformed
 public void initJIntellitype()
     {
         JIntellitype.getInstance().addHotKeyListener(this);
@@ -270,7 +405,8 @@ public void initJIntellitype()
     
     public void onHotKey(int key_identifier){
         
-        if(key_identifier==44){
+        if(key_identifier==44)
+        {
             
             //System.out.println("PRINT SCREEN pressed");
             screensize = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
@@ -292,12 +428,23 @@ public void initJIntellitype()
             Global.Global_Int = keypress_count;
             
         }
+        if (key_identifier==46)
+        {
+            //System.out.println("DELETE pressed.");
+            //Logger.getLogger(Hovercraft.class.getName()).info("Delete Pressed for "+temp_jpg_filename);
+            keypress_count--;
+            Global.Global_Int = keypress_count;            
+        }
+            
                
     }
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String args[]) throws IOException {
+        FileHandler logfile_handler = new FileHandler("log.txt",true);
+        logfile_handler.setFormatter(new SimpleFormatter());
+        Logger.getLogger(Hovercraft.class.getName()).addHandler(logfile_handler);
         try {
             UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
         } catch (ClassNotFoundException ex) {
@@ -310,7 +457,7 @@ public void initJIntellitype()
             Logger.getLogger(Hovercraft.class.getName()).log(Level.SEVERE, null, ex);
         }
         java.awt.EventQueue.invokeLater(new Runnable() {
-
+            
             
             public void run() {
                 new Hovercraft().setVisible(true);
@@ -319,12 +466,15 @@ public void initJIntellitype()
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browse_button;
+    private javax.swing.JButton deletelastfile;
     private javax.swing.JTextField file_name;
     private javax.swing.JTextField file_path;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JButton openlastfile;
     private javax.swing.JButton startstop_button;
+    private javax.swing.JLabel version;
     // End of variables declaration//GEN-END:variables
 }
 
